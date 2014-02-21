@@ -6,6 +6,8 @@ library(lubridate)
 library(ggplot2)
 library(plyr)
 library(PlayerRatings)
+library(data.table)
+library(dplyr)
 
 # Function and data wrapper for computing faction win rates from data that is passed in. 
 source("FactionWinrates.R")
@@ -51,7 +53,7 @@ octgn.df$Win <- as.factor(octgn.df$Win)
 levels(octgn.df$Win)
 
 # Take the date floor of each month in order to divide the results by Year/Month. 
-octgn.df$YearMonth <- floor_date(octgn.df$GameStart, "month")
+octgn.df$Period <- floor_date(octgn.df$GameStart, "month")
 
 # Rename the columns to simpler values. 
 names(octgn.df)[names(octgn.df) == "Player_Faction"] <- "CorpID"
@@ -63,16 +65,10 @@ names(octgn.df)[names(octgn.df) == "O_CNR"] <- "RunDeckSize"
 
 names(octgn.df)
 
+# Now convert it to a data table. I could have done all of the above manipulation after the conversion, but
+# it was all written already. 
+# octgn.dt <- data.table(octgn.df)
 
-
-
-dates <- data.frame(cbind(1:13))
-names(dates) <- "Dates"
-for (i in 1:12) { dates[i, 1] <- paste(c("2013-", i), collapse = " ") }
-# Need to get 2014 in front of Jan 2014. 
-
-corpwins.df$dates <- dates
-runwins.df$dates <- dates
 
 
 # Other interesting questions:

@@ -11,16 +11,15 @@
 # 1. Time block as numeric, 2. Numeric or character identifier for player one, 3. Same for P2, 4. The
 # result of the game expressed as numeric -- 1 for P1 win, 0 for P2 win, 0.5 for draw. 
 
-criteria <- c("YearMonth", "Corp_Player", "Runner_Player", "Win")
-ratings <- octgn.df[criteria]
+ratings <- select(octgn.df, Period, Corp_Player, Runner_Player, Win)
 
 # Convert Win/Loss factor to 1/0. 
 ratings$Win <- as.numeric(ratings$Win)
 ratings$Win <- ratings$Win - 1
 
-# Convert the YearMonth "dates" to a factor and then to a numeric in order to pass them to glicko(). 
-ratings$YearMonth <- cut(ratings$YearMonth, breaks = "month")
-ratings$YearMonth <- as.numeric(ratings$YearMonth)
+# Convert the Period "dates" to a factor and then to a numeric in order to pass them to glicko(). 
+ratings$Period <- cut(ratings$Period, breaks = "month")
+ratings$Period <- as.numeric(ratings$Period)
 
 # Note that per its creator, Glicko works best when each player is playing 5-10 games per rating period. 
 ratings <- glicko(ratings, history = TRUE, sort = TRUE, init = c(1500, 350))
@@ -75,9 +74,21 @@ winrates.list <- FactionWinrates(rated.games)
 runwins.df <- data.frame(winrates.list[1])
 corpwins.df <- data.frame(winrates.list[2])
 
+
+# Assign the year-month pairings to a df and then append that to the winrate data. 
+dates <- data.frame(cbind(1:13))
+names(dates) <- "Dates"
+for (i in 1:12) { dates[i, 1] <- paste(c("2013-", i), collapse = " ") }
+dates[13, 1] <- "2014-01"
+
+corpwins.df$dates <- dates
+runwins.df$dates <- dates
+
+
+
 # Next step is to validate Glicko parameter selections by predicting player wins. 
 # Note that Glicko works best when each player plays 5-10 games per period... need to look at average
 # number of games by player per period. 
 
 # Testing how to subset the data by date. Lubridate makes it easy. Thanks, @hadleywickham!
-test <- rated.games[rated.games$YearMonth == ymd("2014-01-01"), ]
+test <- rated.games[rated.games$Period == ymd("2014-01-01"), ]
