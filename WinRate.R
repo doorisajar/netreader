@@ -1,6 +1,3 @@
-# Step 1: Compute Corp win frequency over a fixed period of time. Ugh!
-# Step 1.1: Create a factor column by extracting only the day of the games. 
-
 WinRate <- function(data, faction, ...) {
   # Computes the fraction of games passed in from OCTGN data that were won by the requested faction. 
   # 

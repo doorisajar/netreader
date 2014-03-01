@@ -78,14 +78,21 @@ corpwins.df <- data.frame(winrates.list[2])
 # Assign the year-month pairings to a df and then append that to the winrate data. 
 dates <- data.frame(cbind(1:13))
 names(dates) <- "Dates"
-for (i in 1:12) { dates[i, 1] <- paste(c("2013-", i), collapse = " ") }
+for (i in 1:12) { dates[i, 1] <- paste("2013-", i, sep = "") }
 dates[13, 1] <- "2014-01"
 
 corpwins.df$dates <- dates
 runwins.df$dates <- dates
 
+by.period.df <- group_by(rated.games, Period)
 
-
+# Count rated games by period and ID. 
+rated.games %.% 
+  group_by(Period) %.%
+  summarise(x = count(as.numeric(row.names)) %.%
+  arrange(desc(x)) %.%
+  head(10)
+            
 # Next step is to validate Glicko parameter selections by predicting player wins. 
 # Note that Glicko works best when each player plays 5-10 games per period... need to look at average
 # number of games by player per period. 

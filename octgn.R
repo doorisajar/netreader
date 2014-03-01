@@ -12,6 +12,7 @@ library(dplyr)
 # Function and data wrapper for computing faction win rates from data that is passed in. 
 source("FactionWinrates.R")
 source("WinRate.R")
+source("FlatlineWins.R")
 
 
 #-----------------------------------------------------------------------------
@@ -68,6 +69,19 @@ names(octgn.df)
 # Now convert it to a data table. I could have done all of the above manipulation after the conversion, but
 # it was all written already. 
 # octgn.dt <- data.table(octgn.df)
+
+
+# ALSO NEED TO FILTER GAMES WHERE RUNDECKSIZE OR CORPDECKSIZE ARE ZERO! Or check with db0 about what
+# that means. 
+
+# Auditing flatline win percentage code. 
+test <- rated.games[rated.games$CorpID=="Jinteki | Personal Evolution", ]
+test$Period <- as.character(test$Period)
+test <- test[test$Period=="2013-01-01", ]
+
+wins <- sum(as.logical(test$Win)) / nrow(test)
+flatline.wins <- sum(as.logical(test$Result == "FlatlineVictory")) / sum(as.logical(test$Win))
+# This does return the same value as calling the function. 
 
 
 
