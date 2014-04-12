@@ -81,7 +81,10 @@ CheckPack <- function(x, data.packs) {
 
 by.period.df <- mutate(by.period.df, Pack = CheckPack(by.period.df$Version, data.packs))
 
-filter(by.period.df, Pack == NA)
+# I checked out the games with Pack = NA; they're simply a small subset of games (about 300) where
+# the version number was either mangled or missing. No problem to simply drop them. 
+by.period.df <- filter(by.period.df, Pack %in% levels(by.period.df$Pack))
+
 
 # Check the number of IDs. 
 # count(levels(by.period.df$CorpID))
