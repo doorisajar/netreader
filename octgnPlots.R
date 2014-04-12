@@ -47,8 +47,21 @@ qplot(octgn.df[octgn.df$CorpID == "Jinteki | Personal Evolution"
 
 
 # Next plot 
-qplot(1:13, flatline.df[, 6],
-      ylim = c(0, 1),
-) +
+ggplot() +
+  geom_point(data = corpwins.df, 
+            aes(x = 1:13,
+                y = "Jinteki | Personal Evolution",
+                colour = "red")
+            ) +
+    geom_point(data = flatline.df, 
+            aes(x = 1:13, 
+                y = "Jinteki | Personal Evolution",
+                colour = "blue")
+  ) +
+  coord_cartesian(ylim = c(0,1)) +
+  scale_y_continuous(breaks = seq(0, 1, 1/4)) +
   xlab("Month") +
-  ylab("Jinteki PE % Flatline Wins") 
+  ylab("Winrate / Flatline Rate") 
+
+corpwins.df$"Jinteki | Personal Evolution"
+flatline.df$"Jinteki | Personal Evolution"

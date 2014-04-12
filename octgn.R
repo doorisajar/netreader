@@ -8,8 +8,9 @@ library(plyr)
 library(PlayerRatings)
 library(data.table)
 library(dplyr)
+library(reshape2)
 
-# Function and data wrapper for computing faction win rates from data that is passed in. 
+# Useful functions. 
 source("FactionWinrates.R")
 source("WinRate.R")
 source("FlatlineWins.R")
@@ -19,69 +20,85 @@ source("FlatlineWins.R")
 # PARSING AND CLEANUP
 #-----------------------------------------------------------------------------
 
-octgn.df <- read.csv('OCTGN_stats_anonymized-2014-01-13.csv', as.is = TRUE)
+octgn.df <- read.csv('OCTGN_stats_anonymized-2014-04-01.csv', as.is = TRUE)
+octgn.df <- tbl_df(octgn.df)
 
 # Basic cleanup. This does eliminate 2012 games (about 12,000 of 156,000), because earlier versions
 # didn't include the agenda count or deck size. 
+# The POSIXct conversion is to make it play nice with dplyr. 
 octgn.df <- na.omit(octgn.df)
 octgn.df$GameStart <- parse_date_time(octgn.df$GameStart, "%Y%m%d %H%M%S")
-
-# Remove Laramy Fisk and The Collective. 
-octgn.df <- octgn.df[with(octgn.df, 
-                          !(Opponent_Faction == "Criminal | Laramy Fisk" 
-                            | Opponent_Faction == "Shaper | The Collective")), ]
+octgn.df$GameStart <- as.POSIXct(octgn.df$GameStart)
 
 # Convert the player identifiers to numeric in order to play nice with PlayerRatings.  
 octgn.df$Corp_Player <- as.numeric(octgn.df$Corp_Player)
 octgn.df$Runner_Player <- as.numeric(octgn.df$Runner_Player)
 
 # Coerce identities to factors. "Player_Faction" denotes Corp, "Opponent_Faction" denotes Runner.  
-octgn.df$Player_Faction <- as.factor(octgn.df$Player_Faction)
-str(octgn.df$Player_Faction) # 11 levels, all Corp
-levels(octgn.df$Player_Faction)
-
-octgn.df$Opponent_Faction <- as.factor(octgn.df$Opponent_Faction)
-str(octgn.df$Opponent_Faction) # 10 levels, all Runner
-levels(octgn.df$Opponent_Faction)
+octgn.df$Corporation <- as.factor(octgn.df$Corporation)
+octgn.df$Runner <- as.factor(octgn.df$Runner)
 
 # There are six possible outcomes:
 # Corp Loss: Agenda Defeat, Deck Defeat, Conceded
 # Corp Win: Agenda Victory, Flatline Victory, ConcedeVictory
 octgn.df$Result <- as.factor(octgn.df$Result)
-levels(octgn.df$Result)
+
+CheckWin <- function(x) { 
+  win <- "NA"
+  if ( x == "AgendaDefeat" | x == "DeckDefeat" | x == "Conceded" | x == "DeckVictory") 
+    { win <- "False" }
+  else if ( x == "AgendaVictory" | x == "FlatlineVictory" | x == "ConcedeVictory" | x == "Flatlined")
+    { win <- "True" }
+  win
+}
+
+# This doesn't work. mutate seems to pass the entire Result column to CheckWin, which is why it
+# also didn't work when I wrote the whole if structure into the mutate call. 
+# octgn.df <- mutate(octgn.df, Win = CheckWin(Result))
+
+Win <- vector(length = length(octgn.df$Result))
+
+for ( i in 1:length(octgn.df$Result) ) {
+  Win[i] <- CheckWin(octgn.df$Result[i])
+}
+
+octgn.df$Win <- Win
+
+# Success.
+# filter(octgn.df, Win=="NA")
 
 octgn.df$Win <- as.factor(octgn.df$Win)
-levels(octgn.df$Win)
 
-# Take the date floor of each month in order to divide the results by Year/Month. 
-octgn.df$Period <- floor_date(octgn.df$GameStart, "month")
 
 # Rename the columns to simpler values. 
-names(octgn.df)[names(octgn.df) == "Player_Faction"] <- "CorpID"
-names(octgn.df)[names(octgn.df) == "Opponent_Faction"] <- "RunID"
-names(octgn.df)[names(octgn.df) == "P_ANR"] <- "CorpAgCards"
-names(octgn.df)[names(octgn.df) == "P_CNR"] <- "CorpDeckSize"
-names(octgn.df)[names(octgn.df) == "O_ANR"] <- "RunAgCards"
-names(octgn.df)[names(octgn.df) == "O_CNR"] <- "RunDeckSize"
+names(octgn.df)[names(octgn.df) == "Corporation"] <- "CorpID"
+names(octgn.df)[names(octgn.df) == "Runner"] <- "RunID"
 
-names(octgn.df)
+# New pruning with dplyr. Filter out Laramy Fisk, The Collective, wins/losses by concession, and deck sizes
+# of zero. 
+octgn.df <- filter(octgn.df, RunID              != "Criminal | Laramy Fisk"                &
+                             RunID              != "Shaper | The Collective"               &
+                             CorpID             != "Jinteki | Selective Mind Mapping"      &
+                             CorpID             != "Haas-Bioroid | Selective Mind Mapping" &
+                             Result             != "Conceded"                              &
+                             Result             != "ConcedeVictory"                        &
+                             Runner_Deck_Size   != 0                                       &
+                             Corp_Deck_Size     != 0                                       &
+                             Duration           >= 0
+)
 
-# Now convert it to a data table. I could have done all of the above manipulation after the conversion, but
-# it was all written already. 
-# octgn.dt <- data.table(octgn.df)
 
 
-# ALSO NEED TO FILTER GAMES WHERE RUNDECKSIZE OR CORPDECKSIZE ARE ZERO! Or check with db0 about what
-# that means. 
+#-----------------------------------------------------------------------------
+# PERIOD SELECTION FOR GLICKO CALCULATION
+#-----------------------------------------------------------------------------
 
-# Auditing flatline win percentage code. 
-test <- rated.games[rated.games$CorpID=="Jinteki | Personal Evolution", ]
-test$Period <- as.character(test$Period)
-test <- test[test$Period=="2013-01-01", ]
+period.select <- "week"
 
-wins <- sum(as.logical(test$Win)) / nrow(test)
-flatline.wins <- sum(as.logical(test$Result == "FlatlineVictory")) / sum(as.logical(test$Win))
-# This does return the same value as calling the function. 
+# Take the date floor of each period to divide the games up for Glicko. 
+# Tested "month" before, now testing "week".
+
+octgn.df$Period <- floor_date(octgn.df$GameStart, period.select)
 
 
 
