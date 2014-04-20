@@ -1,5 +1,5 @@
 # Script file for processing OCTGN Netrunner data. 
-# 
+# Simply modify the filename and path in line 11, and season to taste. 
 
 library(lubridate)
 library(dplyr)
@@ -14,7 +14,6 @@ octgn.df <- tbl_df(octgn.df)
 # Basic cleanup. This does eliminate 2012 games (about 12,000 of 156,000), because earlier versions
 # didn't include the agenda count or deck size. 
 # The POSIXct conversion is to make it play nice with dplyr. 
-octgn.df <- na.omit(octgn.df)
 octgn.df$GameStart <- parse_date_time(octgn.df$GameStart, "%Y%m%d %H%M%S")
 octgn.df$GameStart <- as.POSIXct(octgn.df$GameStart)
 
@@ -46,8 +45,7 @@ octgn.df <- mutate(octgn.df, Win = (Result == "AgendaVictory"   |
 names(octgn.df)[names(octgn.df) == "Corporation"] <- "CorpID"
 names(octgn.df)[names(octgn.df) == "Runner"] <- "RunID"
 
-# New pruning with dplyr. Filter out Laramy Fisk, The Collective, wins/losses by concession, and deck sizes
-# of zero. 
+# Filter out Laramy Fisk, The Collective, wins/losses by concession, and deck sizes of zero. 
 octgn.df <- filter(octgn.df, RunID              != "Criminal | Laramy Fisk"                &
                              RunID              != "Shaper | The Collective"               &
                              CorpID             != "Jinteki | Selective Mind Mapping"      &

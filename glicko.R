@@ -56,33 +56,34 @@ player.ratings <- tbl_df(ratings$ratings)
 # str(summary(player.ratings$Rating))
 
 # Prune to > 5 games played. 
-# player.ratings <- player.ratings[player.ratings$Games >= 20, ]
+# This actually eliminates about 50% of the remaining players, so it's pretty common for OCTGN
+# players to try it a few times and then quit. 
 player.ratings <- filter(player.ratings, Games >= 5)
 
-# Take the top quartile. Should be pretty skilled players. 
-# top.ratings <- player.ratings[player.ratings$Rating >= summary(player.ratings$Rating)["3rd Qu."], ]
-
-# Instead, take the players who are more than 1 sd above the mean. 
-top.ratings <- filter(player.ratings, Rating >= mean(player.ratings$Rating) + sd(player.ratings$Rating))
-
-# Store full deviation data for the writeup.
+# Store full deviation data for future use.
 devplot.df <- player.ratings
 save(devplot.df, file = 'devplot.Rda')
 
 # Now to prune players by Deviation. This removes quite a few players! 
 player.ratings <- filter(player.ratings, Deviation < 150)
-top.ratings <- filter(top.ratings, Deviation < 150)
 
+# Take players who are more than 1 sd above the mean as skilled players. 
+top.ratings <- filter(player.ratings, Rating >= mean(player.ratings$Rating) + sd(player.ratings$Rating))
+
+# Store the pruned player ratings for future use. 
 save(player.ratings, file = 'player-ratings.Rda')
 
-# After all that, though, I still have almost 80,000 games with these players in the original data. Nice. 
+# After all that, we still have over 70,000 games with these players in the original data. Nice. 
+# Store this subset for future use as well. 
 rated.games <- filter(octgn.df, Corp_Player %in% top.ratings$Player | Runner_Player %in% top.ratings$Player)
+save(rated.games, file = 'rated-games.Rda')
 
+# Compute win fraction for each ID in each period, and write those data frames out for future use. 
 runwins.df <- rated.games %.% 
                 group_by(RunID, Period) %.%
                 summarise(Games = n(),
                 Winrate = 1 - sum(Win) / Games
-                )
+                         )
 
 corpwins.df <- rated.games %.%
                 group_by(CorpID, Period) %.%

@@ -85,14 +85,7 @@ rated.games <- mutate(rated.games, Pack = CheckPack(rated.games$Version, data.pa
 # the version number was either mangled or missing. No problem to simply drop them. 
 rated.games <- filter(rated.games, Pack %in% levels(rated.games$Pack))
 
-
-# Check the number of IDs. 
-# count(levels(by.period.df$CorpID))
-# count(levels(by.period.df$RunID))
-
-rated.games$Win <- as.numeric(rated.games$Win)
-rated.games$Win <- rated.games$Win - 1
-
+# Calculate winrates for each ID by matchup, and write the data out for future use. 
 matchups.df <- rated.games %.%
                   group_by(CorpID, RunID, Pack) %.%
                   summarise(CorpWins = sum(Win) / length(Win),

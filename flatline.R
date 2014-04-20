@@ -1,20 +1,10 @@
 # Script file for estimating the effect of player skill on flatline winrates for both Corp and Runner IDs. 
 
-# Includes. Need to handle dates, split/apply data frames, compute player ratings from wins/losses, and 
-# plot stuff. 
-library(lubridate)
-library(plyr)
-library(PlayerRatings)
 library(dplyr)
-
-# Useful functions. 
-source("FactionWinrates.R")
-source("WinRate.R")
-source("FlatlineWins.R")
 
 # Files that we've written out in previous scripts. 
 load('player-ratings.Rda')
-
+load('rated-games.Rda')
 
 #-----------------------------------------------------------------------------
 # PERIOD SELECTION FOR FLATLINE CALCULATION
@@ -23,9 +13,13 @@ load('player-ratings.Rda')
 flatline.df <- rated.games
 flatline.df$Period <- flatline.df$Pack
 
+
 #-----------------------------------------------------------------------------
-# 
+# GAME SUBSET GENERATION
 #-----------------------------------------------------------------------------
+
+# Take all players, the top half, 1+ sd above mean, 2+ sd above mean, and create a df for each group
+# comprising all of their games. This allows comparisons by changing skill level. 
 
 top.all <- player.ratings
 top.half <- filter(player.ratings, Rating >= mean(player.ratings$Rating))
@@ -41,6 +35,11 @@ top.2sd <- filter(flatline.df, Corp_Player %in% top.2sd$Player | Runner_Player %
 #-----------------------------------------------------------------------------
 # CORP WINS BY FLATLINE
 #-----------------------------------------------------------------------------
+
+top.all %.% 
+  group_by(CorpID, Pack) %.%
+  summarise(Games = n())
+
 
 corp.all <- FlatlineWinrates(top.all)
 corp.half <- FlatlineWinrates(top.half)
