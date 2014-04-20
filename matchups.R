@@ -79,25 +79,26 @@ CheckPack <- function(x, data.packs) {
   return( data.packs$Pack[match( substr(x, 1, 3), data.packs$Version )] )
 }
 
-by.period.df <- mutate(by.period.df, Pack = CheckPack(by.period.df$Version, data.packs))
+rated.games <- mutate(rated.games, Pack = CheckPack(rated.games$Version, data.packs))
 
 # I checked out the games with Pack = NA; they're simply a small subset of games (about 300) where
 # the version number was either mangled or missing. No problem to simply drop them. 
-by.period.df <- filter(by.period.df, Pack %in% levels(by.period.df$Pack))
+rated.games <- filter(rated.games, Pack %in% levels(rated.games$Pack))
 
 
 # Check the number of IDs. 
 # count(levels(by.period.df$CorpID))
 # count(levels(by.period.df$RunID))
 
-by.period.df$Win <- as.numeric(by.period.df$Win)
-by.period.df$Win <- by.period.df$Win - 1
+rated.games$Win <- as.numeric(rated.games$Win)
+rated.games$Win <- rated.games$Win - 1
 
-matchups.df <- by.period.df %.%
+matchups.df <- rated.games %.%
                   group_by(CorpID, RunID, Pack) %.%
                   summarise(CorpWins = sum(Win) / length(Win),
                             RunWins = 1 - CorpWins,
                             Games = n()
                             )
 
+save(matchups.df, file = 'matchups.Rda')
 

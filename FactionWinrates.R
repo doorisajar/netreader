@@ -11,7 +11,7 @@ FactionWinrates <- function (octgn, ...) {
   corpwins.df <- data.frame(matrix(nrow = length(levels(as.factor(as.character(octgn$Period)))), 
                                    ncol = length(levels(octgn$CorpID))))
 
-# Iterate through Corp IDs and compute monthly winrate for each. 
+# Iterate through Corp IDs and compute period winrate for each. 
 
   # test <- select(octgn.df, -GameStart, -Period)
 
@@ -39,7 +39,7 @@ FactionWinrates <- function (octgn, ...) {
   runwins.df <- data.frame(matrix(nrow = length(levels(as.factor(as.character(octgn$Period)))), 
                                   ncol = length(levels(octgn$RunID))))
 
-  # Iterate through Runner IDs and compute monthly winrate for each. 
+  # Iterate through Runner IDs and compute period winrate for each. 
   for (i in 1:length(levels(octgn$RunID))) {
     
     faction <- as.character(levels(octgn$RunID))[i]

@@ -1,20 +1,8 @@
 # Script file for processing OCTGN Netrunner data. 
+# 
 
-# Includes. Need to handle dates, split/apply data frames, compute player ratings from wins/losses, and 
-# plot stuff. 
 library(lubridate)
-library(ggplot2)
-library(plyr)
-library(PlayerRatings)
-library(data.table)
 library(dplyr)
-library(reshape2)
-
-# Useful functions. 
-source("FactionWinrates.R")
-source("WinRate.R")
-source("FlatlineWins.R")
-
 
 #-----------------------------------------------------------------------------
 # PARSING AND CLEANUP
@@ -43,32 +31,16 @@ octgn.df$Runner <- as.factor(octgn.df$Runner)
 # Corp Win: Agenda Victory, Flatline Victory, ConcedeVictory
 octgn.df$Result <- as.factor(octgn.df$Result)
 
-CheckWin <- function(x) { 
-  win <- "NA"
-  if ( x == "AgendaDefeat" | x == "DeckDefeat" | x == "Conceded" | x == "DeckVictory") 
-    { win <- "False" }
-  else if ( x == "AgendaVictory" | x == "FlatlineVictory" | x == "ConcedeVictory" | x == "Flatlined")
-    { win <- "True" }
-  win
-}
+# Set Corp win to TRUE, Runner win to FALSE. 
+octgn.df <- mutate(octgn.df, Win = (Result == "AgendaVictory"   | 
+                                    Result == "FlatlineVictory" | 
+                                    Result == "ConcedeVictory"  | 
+                                    Result == "Flatlined"
+                                    )
+                   )
 
-# This doesn't work. mutate seems to pass the entire Result column to CheckWin, which is why it
-# also didn't work when I wrote the whole if structure into the mutate call. 
-# octgn.df <- mutate(octgn.df, Win = CheckWin(Result))
-
-Win <- vector(length = length(octgn.df$Result))
-
-for ( i in 1:length(octgn.df$Result) ) {
-  Win[i] <- CheckWin(octgn.df$Result[i])
-}
-
-octgn.df$Win <- Win
-
-# Success.
-# filter(octgn.df, Win=="NA")
-
-octgn.df$Win <- as.factor(octgn.df$Win)
-
+# May not need this anymore with the conversion to dplyr. 
+# octgn.df$Win <- as.factor(octgn.df$Win)
 
 # Rename the columns to simpler values. 
 names(octgn.df)[names(octgn.df) == "Corporation"] <- "CorpID"
@@ -82,26 +54,7 @@ octgn.df <- filter(octgn.df, RunID              != "Criminal | Laramy Fisk"     
                              CorpID             != "Haas-Bioroid | Selective Mind Mapping" &
                              Result             != "Conceded"                              &
                              Result             != "ConcedeVictory"                        &
-                             Runner_Deck_Size   != 0                                       &
-                             Corp_Deck_Size     != 0                                       &
+                             Runner_Deck_Size   >= 45                                      &
+                             Corp_Deck_Size     >= 40                                      &
                              Duration           >= 0
 )
-
-
-
-#-----------------------------------------------------------------------------
-# PERIOD SELECTION FOR GLICKO CALCULATION
-#-----------------------------------------------------------------------------
-
-period.select <- "week"
-
-# Take the date floor of each period to divide the games up for Glicko. 
-# Tested "month" before, now testing "week".
-
-octgn.df$Period <- floor_date(octgn.df$GameStart, period.select)
-
-
-
-# Other interesting questions:
-# Average win speed by faction?
-# ...flatline wins, win speed, win margin, and influence usage by faction, matchup, and skill level. 
