@@ -6,17 +6,12 @@ library(dplyr)
 load('player-ratings.Rda')
 load('rated-games.Rda')
 
-#-----------------------------------------------------------------------------
-# PERIOD SELECTION FOR FLATLINE CALCULATION
-#-----------------------------------------------------------------------------
-
-flatline.df <- rated.games
-flatline.df$Period <- flatline.df$Pack
-
 
 #-----------------------------------------------------------------------------
 # GAME SUBSET GENERATION
 #-----------------------------------------------------------------------------
+
+flatline.df <- octgn.df
 
 # Take all players, the top half, 1+ sd above mean, 2+ sd above mean, and create a df for each group
 # comprising all of their games. This allows comparisons by changing skill level. 
@@ -36,96 +31,73 @@ top.2sd <- filter(flatline.df, Corp_Player %in% top.2sd$Player | Runner_Player %
 # CORP WINS BY FLATLINE
 #-----------------------------------------------------------------------------
 
-top.all %.% 
+corp.all <- top.all %.% 
+            group_by(CorpID, Pack) %.%
+            summarise(CorpWins = sum(Win) / length(Win),
+                      RunWins = 1 - CorpWins,
+                      Games = n(),
+                      Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(Win)
+                      )
+
+corp.half <- top.half %.% 
   group_by(CorpID, Pack) %.%
-  summarise(Games = n())
+  summarise(CorpWins = sum(Win) / length(Win),
+            RunWins = 1 - CorpWins,
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(Win)
+  )
 
+corp.sd <- top.sd %.% 
+  group_by(CorpID, Pack) %.%
+  summarise(CorpWins = sum(Win) / length(Win),
+            RunWins = 1 - CorpWins,
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(Win)
+  )
 
-corp.all <- FlatlineWinrates(top.all)
-corp.half <- FlatlineWinrates(top.half)
-corp.sd <- FlatlineWinrates(top.sd)
-corp.2sd <- FlatlineWinrates(top.2sd)
-
-packs <- c("Trace Amount",
-           "Cyber Exodus",
-           "A Study in Static",
-           "Humanity's Shadow",
-           "Future Proof",
-           "Creation and Control",
-           "Opening Moves",
-           "Second Thoughts",
-           "Mala Tempora",
-           "True Colors",
-           "Fear and Loathing",
-           "Double Time"
-           )
-
-corp.all$Pack <- packs
-corp.half$Pack <- packs
-corp.sd$Pack <- packs
-corp.2sd$Pack <- packs
-
-corp.all <- tbl_df(top.all)
-corp.half <- tbl_df(top.half)
-corp.sd <- tbl_df(top.sd)
-corp.2sd <- tbl_df(top.2sd)
-
-corp.all$"Weyland Consortium | Building a Better World"
-corp.half$"Weyland Consortium | Building a Better World"
-corp.sd$"Weyland Consortium | Building a Better World"
-corp.2sd$"Weyland Consortium | Building a Better World"
-
-corp.all$"Jinteki | Personal Evolution"
-corp.half$"Jinteki | Personal Evolution"
-corp.sd$"Jinteki | Personal Evolution"
-corp.2sd$"Jinteki | Personal Evolution"
+corp.2sd <- top.2sd %.% 
+  group_by(CorpID, Pack) %.%
+  summarise(CorpWins = sum(Win) / length(Win),
+            RunWins = 1 - CorpWins,
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(Win)
+  )
 
 # So percentage of games won by flatline doesn't change massively with Corp skill. 
+
 
 #-----------------------------------------------------------------------------
 # RUNNER LOSSES BY FLATLINE
 #-----------------------------------------------------------------------------
 
-run.all <- FlatlineLosses(top.all)
-run.half <- FlatlineLosses(top.half)
-run.sd <- FlatlineLosses(top.sd)
-run.2sd <- FlatlineLosses(top.2sd)
-
-run.all$Pack <- packs
-run.half$Pack <- packs
-run.sd$Pack <- packs
-run.2sd$Pack <- packs
-
-run.all$"Shaper | Kate McCaffrey"
-run.half$"Shaper | Kate McCaffrey"
-run.sd$"Shaper | Kate McCaffrey"
-run.2sd$"Shaper | Kate McCaffrey"
-
-run.all$"Criminal | Andromeda"
-run.half$"Criminal | Andromeda"
-run.sd$"Criminal | Andromeda"
-run.2sd$"Criminal | Andromeda"
-
-
-run.all <- top.all %.%
-            group_by(RunID, Pack) %.%
-            summarise(FlatLoss = (Result == "FlatlineVictory" | Result == "Flatlined"),
-                      Games = n(),
-                      FlatRate = sum(FlatLoss) / Games
-            )
-  
-  # V5 = (V1 == 1 & V2 != 4) + 2 * (V2 == 4 & V3 != 1)
-  
-top.all %.% 
-  mutate(Flatline = Result == "FlatlineVictory" | Result == "Flatlined") %.%
-  select(CorpID, RunID, Flatline)
-
-top.all$Result[4]
-top.all$Win[4]
-
-  matchups.df <- rated.games %.%
-  group_by(CorpID, RunID, Pack) %.%
+run.all <- top.all %.% 
+  group_by(RunID, Pack) %.%
   summarise(CorpWins = sum(Win) / length(Win),
             RunWins = 1 - CorpWins,
-            Games = n()
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(!Win)
+  )
+
+run.half <- top.half %.% 
+  group_by(RunID, Pack) %.%
+  summarise(CorpWins = sum(Win) / length(Win),
+            RunWins = 1 - CorpWins,
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(!Win)
+  )
+
+run.sd <- top.sd %.% 
+  group_by(RunID, Pack) %.%
+  summarise(CorpWins = sum(Win) / length(Win),
+            RunWins = 1 - CorpWins,
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(!Win)
+  )
+
+run.2sd <- top.2sd %.% 
+  group_by(RunID, Pack) %.%
+  summarise(CorpWins = sum(Win) / length(Win),
+            RunWins = 1 - CorpWins,
+            Games = n(),
+            Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(!Win)
   )
