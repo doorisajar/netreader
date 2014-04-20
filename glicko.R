@@ -36,7 +36,6 @@ ratings <- select(octgn.df, Period, Corp_Player, Runner_Player, Win)
 
 # Convert Win/Loss factor to 1/0. 
 ratings$Win <- as.numeric(ratings$Win)
-ratings$Win <- ratings$Win - 1
 
 # Convert the Period "dates" to a factor and then to a numeric in order to pass them to glicko(). 
 ratings$Period <- cut(ratings$Period, breaks = period.select)
@@ -79,30 +78,17 @@ save(player.ratings, file = 'player-ratings.Rda')
 # After all that, though, I still have almost 80,000 games with these players in the original data. Nice. 
 rated.games <- filter(octgn.df, Corp_Player %in% top.ratings$Player | Runner_Player %in% top.ratings$Player)
 
-winrates.list <- FactionWinrates(rated.games)
+runwins.df <- rated.games %.% 
+                group_by(RunID, Period) %.%
+                summarise(Games = n(),
+                Winrate = 1 - sum(Win) / Games
+                )
 
-runwins.df <- data.frame(winrates.list[1])
-corpwins.df <- data.frame(winrates.list[2])
-save(runwins.df, 'runwins.Rda')
-save(corpwins.df, corpwins.Rda)
+corpwins.df <- rated.games %.%
+                group_by(CorpID, Period) %.%
+                summarise(Games = n(),
+                          Winrate = sum(Win) / Games
+                          )
 
-# Fix the name formatting. 
-names(corpwins.df) <- levels(octgn.df$CorpID)
-names(runwins.df) <- levels(octgn.df$RunID)
-
-
-# Assign the year-month pairings to a df and then append that to the winrate data. 
-# dates <- data.frame(cbind(1:13))
-# names(dates) <- "Dates"
-# for (i in 1:12) { dates[i, 1] <- paste("2013-", i, sep = "") }
-# dates[13, 1] <- "2014-01"
-
-# corpwins.df$dates <- dates
-# runwins.df$dates <- dates
-
-# Next step is to validate Glicko parameter selections by predicting player wins. 
-# Note that Glicko works best when each player plays 5-10 games per period... need to look at average
-# number of games by player per period. 
-
-# Testing how to subset the data by date. Lubridate makes it easy. Thanks, @hadleywickham!
-# test <- rated.games[rated.games$Period == ymd("2014-01-01"), ]
+save(runwins.df, file = 'runwins.Rda')
+save(corpwins.df, file = 'corpwins.Rda')
