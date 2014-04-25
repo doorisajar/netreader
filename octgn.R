@@ -8,7 +8,7 @@ library(dplyr)
 # PARSING AND CLEANUP
 #-----------------------------------------------------------------------------
 
-octgn.df <- read.csv('OCTGN_stats_anonymized-2014-04-01.csv', as.is = TRUE)
+# octgn.df <- read.csv('OCTGN_stats_anonymized-2014-04-01.csv', as.is = TRUE)
 octgn.df <- tbl_df(octgn.df)
 
 # Basic cleanup. This does eliminate 2012 games (about 12,000 of 156,000), because earlier versions

@@ -1,7 +1,7 @@
 # Includes. Need to handle dates, split/apply data frames, compute player ratings from wins/losses, and 
 # plot stuff. 
 library(lubridate)
-library(plyr)
+# library(plyr)
 library(PlayerRatings)
 library(dplyr)
 
