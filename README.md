@@ -6,10 +6,9 @@ These script files parse and transform Netrunner OCTGN data.
 
 Note the following required packages:
 
-dplyr 0.1.3+
-lubridate 1.3.0+
-ggplot2 0.9.3.1+
-PlayerRatings 1.0+
+* dplyr 0.1.3+
+* lubridate 1.3.0+
+* PlayerRatings 1.0+
 
 In addition, an Android: Netrunner OCTGN CSV data file is required in your working directory, and you will need to read it and name it octgn.df prior to executing the script. An example line is provided as a comment at the start of octgn.R for this purpose. 
 
@@ -25,6 +24,11 @@ In addition, an Android: Netrunner OCTGN CSV data file is required in your worki
   * Jinteki and Haas-Bioroid: Selective Mind-Mapping.
 * Removes games with missing data:
   * Games with no version number (used to determine which data packs were valid). 
+* Modifies: 
+  * Runner_Player and Corporation_Player renamed to RunID and CorpID. 
+* Adds: 
+  * The latest available data pack on OCTGN when the game was played (Pack).
+  * Win / Loss column. A Corp win is stored as TRUE. 
 
 *glicko.R*
 
