@@ -63,8 +63,11 @@ corp.2sd <- top.2sd %.%
             Flatline = sum(Result == "FlatlineVictory" | Result == "Flatlined") / sum(Win)
   )
 
-# So percentage of games won by flatline doesn't change massively with Corp skill. 
+# Need some code here to compare flatline percentages (percentage of wins that are flatlines) across
+# Corp skill levels. The Corp data frames have different row counts... we lose some IDs in some data packs
+# as we cut from all to half to the stdevs. 
 
+# setdiff looks at two arguments and returns the observations that are different. 
 
 #-----------------------------------------------------------------------------
 # RUNNER LOSSES BY FLATLINE

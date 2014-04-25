@@ -5,10 +5,10 @@ library(plyr)
 library(PlayerRatings)
 library(dplyr)
 
-# Useful functions. 
-source("FactionWinrates.R")
-source("WinRate.R")
-source("FlatlineWins.R")
+# Deprecated functions. 
+# source("FactionWinrates.R")
+# source("WinRate.R")
+# source("FlatlineWins.R")
 
 
 #-----------------------------------------------------------------------------
