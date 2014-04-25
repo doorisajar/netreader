@@ -28,3 +28,11 @@ test.R
 unitTests.R
 validation.R
 Netrunner.Rproj
+FactionWinrates.R
+FlatlineLosses.R
+FlatlineWins.R
+WinRate.R
+faction_winrates.R
+octgnPlots.R
+server.R
+ui.R
